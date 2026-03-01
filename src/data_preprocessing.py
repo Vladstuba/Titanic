@@ -1,18 +1,20 @@
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OrdinalEncoder
 
-def basic_preprocessing(X):
-    #Preprocess data: handle missing values, encode categorical variables, etc.
-    categorical = list(X.select_dtypes(include=['object']).columns)
-    numerical = list(X.select_dtypes(include=['int64', 'float64']).columns)
+def basic_preprocessing(train_data, test_data):
+    categorical = [col for col in train_data.columns if train_data[col].dtype == 'object' and col not in ['PassengerId', 'Name', 'Ticket', 'Cabin']]
+    numerical = [col for col in train_data.columns if train_data[col].dtype != 'object' and col not in ['PassengerId', 'Name', 'Ticket', 'Cabin']]
 
-    inputer_for_numerical = SimpleImputer(strategy="median")
-    inputer_for_categorical = SimpleImputer(strategy="most_frequent")
-    X[numerical]=inputer_for_numerical.fit_transform(X[numerical])
+    imp_num = SimpleImputer(strategy="median")
+    imp_cat = SimpleImputer(strategy="most_frequent")
+    encoder = OrdinalEncoder()
 
-    X[categorical]=inputer_for_categorical.fit_transform(X[categorical])
+    train_data[numerical] = imp_num.fit_transform(train_data[numerical])
+    train_data[categorical] = imp_cat.fit_transform(train_data[categorical])
+    train_data[categorical] = encoder.fit_transform(train_data[categorical])
 
-    encoder=OrdinalEncoder()
-    X[categorical]=encoder.fit_transform(X[categorical])
-    
-    return X
+    test_data[numerical] = imp_num.transform(test_data[numerical])
+    test_data[categorical] = imp_cat.transform(test_data[categorical])
+    test_data[categorical] = encoder.transform(test_data[categorical])
+
+    return train_data, test_data
